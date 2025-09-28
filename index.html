@@ -4,11 +4,21 @@
   <meta charset="UTF-8">
   <title>Календарь дней рождения</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script defer src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Календарь дней рождения</h1>
-  <div id="app"></div>
+  <form id="birthdayForm">
+    <input type="text" id="name" placeholder="Имя" required>
+    <input type="date" id="date" required>
+    <button type="submit">Добавить</button>
+  </form>
+
+  <h2>Список дней рождения</h2>
+  <ul id="birthdayList"></ul>
+
+  <script src="script.js"></script>
 </body>
 </html>
