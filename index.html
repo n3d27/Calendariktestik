@@ -73,12 +73,12 @@ function render(){
     del.textContent='Удалить';
     del.className='del';
     del.onclick=()=>{
-      birthdays = birthdays.filter(x=>x!==b);
+      birthdays = birthdays.filter(x=>x.id !== b.id); // удаляем по уникальному id
       save(); render();
     };
     li.appendChild(del);
 
-    // Подсветка
+    // подсветка
     if(b.diffDays === 0) li.classList.add('today');
     else if(b.diffDays <= 7) li.classList.add('soon');
 
@@ -91,7 +91,7 @@ form.onsubmit = e=>{
   const name = form.name.value.trim();
   const dateStr = form.date.value;
   if(!name || !dateStr) return;
-  birthdays.push({name, date: dateStr});
+  birthdays.push({id: Date.now(), name, date: dateStr}); // уникальный id для удаления
   save();
   form.reset();
   render();
