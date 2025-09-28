@@ -1,24 +1,132 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Календарь дней рождения</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Календарь дней рождения</title>
+<style>
+  body { font-family:sans-serif; margin:20px; background:#f7f7fb; }
+  h1 { font-size:20px; margin-bottom:10px; }
+  .calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px; }
+  .day { min-height:60px; background:#fff; padding:4px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1); position:relative; }
+  .date-num { font-weight:600; }
+  .birth { display:block; font-size:12px; background:#cce5ff; color:#08306b; padding:2px 4px; border-radius:4px; margin-top:2px; cursor:pointer; }
+  form { margin-top:15px; display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  input, button { padding:6px; border-radius:6px; border:1px solid #ccc; }
+  button { background:#2b6cb0; color:#fff; border:0; cursor:pointer; }
+  button.ghost { background:#fff; color:#2b6cb0; border:1px solid #2b6cb0; }
+  .nav { margin-top:10px; display:flex; gap:8px; align-items:center; }
+</style>
 </head>
 <body>
-  <h1>Календарь дней рождения</h1>
-  <form id="birthdayForm">
-    <input type="text" id="name" placeholder="Имя" required>
-    <input type="date" id="date" required>
-    <button type="submit">Добавить</button>
-  </form>
 
-  <h2>Список дней рождения</h2>
-  <ul id="birthdayList"></ul>
+<h1>Календарь дней рождения</h1>
 
-  <script src="script.js"></script>
+<div class="nav">
+  <button id="prev">◀</button>
+  <span id="monthLabel"></span>
+  <button id="next">▶</button>
+</div>
+
+<div class="calendar" id="calendar"></div>
+
+<form id="birthdayForm">
+  <input type="text" id="name" placeholder="Имя" required>
+  <input type="date" id="date" required>
+  <button type="submit">Добавить</button>
+</form>
+
+<script>
+const calendarEl = document.getElementById('calendar');
+const monthLabel = document.getElementById('monthLabel');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const form = document.getElementById('birthdayForm');
+
+let birthdays = JSON.parse(localStorage.getItem('birthdays') || '[]');
+
+let viewYear, viewMonth;
+const now = new Date();
+viewYear = now.getFullYear();
+viewMonth = now.getMonth();
+
+function pad(n){ return n<10? '0'+n : ''+n; }
+
+function save(){ localStorage.setItem('birthdays', JSON.stringify(birthdays)); }
+
+function renderCalendar(){
+  calendarEl.innerHTML = '';
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  monthLabel.textContent = monthNames[viewMonth] + ' ' + viewYear;
+
+  const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  weekdays.forEach(w => {
+    const div = document.createElement('div');
+    div.textContent = w;
+    div.style.fontWeight='700';
+    calendarEl.appendChild(div);
+  });
+
+  const first = new Date(viewYear, viewMonth, 1);
+  const startDay = (first.getDay()+6)%7; // monday=0
+  const daysInMonth = new Date(viewYear, viewMonth+1,0).getDate();
+
+  for(let i=0;i<startDay;i++){
+    const empty = document.createElement('div');
+    calendarEl.appendChild(empty);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const div = document.createElement('div');
+    div.className='day';
+    const dateSpan = document.createElement('div');
+    dateSpan.className='date-num';
+    dateSpan.textContent=d;
+    div.appendChild(dateSpan);
+
+    const dayStr = `${pad(d)}-${pad(viewMonth+1)}`;
+    birthdays.filter(b=>b.md===dayStr).forEach(b=>{
+      const bSpan = document.createElement('span');
+      bSpan.className='birth';
+      bSpan.textContent=b.name;
+      bSpan.onclick=()=>{ if(confirm('Удалить '+b.name+'?')){ birthdays = birthdays.filter(x=>x!==b); save(); renderCalendar(); } };
+      div.appendChild(bSpan);
+    });
+
+    calendarEl.appendChild(div);
+  }
+}
+
+function normalizeDateInput(str){
+  const [y,m,d]=str.split('-');
+  return { full:`${y}-${m}-${d}`, md:`${d}-${m}` };
+}
+
+form.onsubmit = e=>{
+  e.preventDefault();
+  const name=form.name.value.trim();
+  const dateStr=form.date.value;
+  if(!name||!dateStr) return;
+  const nd = normalizeDateInput(dateStr);
+  birthdays.push({name, date:nd.full, md:nd.md});
+  save();
+  form.reset();
+  renderCalendar();
+}
+
+prevBtn.onclick=()=>{
+  viewMonth--;
+  if(viewMonth<0){ viewMonth=11; viewYear--; }
+  renderCalendar();
+}
+nextBtn.onclick=()=>{
+  viewMonth++;
+  if(viewMonth>11){ viewMonth=0; viewYear++; }
+  renderCalendar();
+}
+
+renderCalendar();
+</script>
+
 </body>
 </html>
